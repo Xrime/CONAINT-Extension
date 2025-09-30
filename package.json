@@ -1,0 +1,59 @@
+{
+  "name": "conaint",
+  "displayName": "CONAINT",
+  "description": "CONAINT - Advanced Code Analysis and Academic Integrity Monitoring System",
+  "version": "1.0.0",
+  "publisher": "your-publisher-name",
+  "categories": ["Other", "Education"],
+  "keywords": ["collaboration", "inspector", "problem-sharing", "real-time"],
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "activationEvents": [],
+  "main": "./out/extension.js",
+
+  "contributes": {
+    "commands": [
+      { "command": "manager.openDashboard", "title": "CONAINT: Open Dashboard" },
+      { "command": "manager.submitProblem", "title": "CONAINT: Submit Problem" },
+      { "command": "manager.openLiveFeed", "title": "CONAINT: Open Live Feed" },
+      { "command": "manager.startInspector", "title": "CONAINT: Start Inspector Mode" },
+      { "command": "manager.testInspector", "title": "CONAINT: Test Inspector (Demo Mode)" },
+      { "command": "manager.testStudentView", "title": "Manager: Test Student View (Demo)" },
+      { "command": "manager.joinInspector", "title": "Manager: Join Inspector Session" },
+      { "command": "manager.openLeaderboard", "title": "Manager: Open Leaderboard" },
+      { "command": "manager.openAiAnalysis", "title": "CONAINT: Open AI Analysis" }
+    ],
+    "configuration": {
+      "title": "CONAINT",
+      "properties": {
+        "conaint.serverUrl": {
+          "type": "string",
+          "default": "ws://localhost:3000",
+          "description": "WebSocket server URL for remote connections"
+        },
+        "conaint.huggingfaceApiToken": {
+          "type": "string",
+          "default": "",
+          "description": "Hugging Face API Token for AI analysis (completely free - get from https://huggingface.co/settings/tokens)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.3",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/ws": "^8.18.1",
+    "@types/uuid": "^9.0.2",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.9.2"
+  }
+}
