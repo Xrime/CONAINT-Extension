@@ -451,6 +451,9 @@ Please be thorough, objective, and provide specific evidence for any claims of s
             color: var(--vscode-editor-foreground);
             background: var(--vscode-editor-background);
             margin: 0;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
         .header {
             display: flex;
@@ -577,6 +580,13 @@ Please be thorough, objective, and provide specific evidence for any claims of s
             white-space: pre-wrap;
             line-height: 1.6;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-height: 60vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 15px;
+            border: 1px solid var(--vscode-editorWidget-border);
+            border-radius: 8px;
+            background: var(--vscode-editor-background);
         }
         .instructions {
             background: #fff3cd;

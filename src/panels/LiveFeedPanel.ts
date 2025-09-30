@@ -79,7 +79,54 @@ export class LiveFeedPanel {
           --accept: #2ecc71;
           --info: #3498db;
         }
-        body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial; padding:12px; color:var(--fg); background:var(--bg); margin:0; }
+        body { 
+          font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial; 
+          padding:12px; 
+          color:var(--fg); 
+          background:var(--bg); 
+          margin:0; 
+          height: 100vh; 
+          overflow-y: auto; 
+          overflow-x: hidden;
+        }
+        
+        .main-container {
+          max-height: calc(100vh - 24px);
+          overflow-y: auto;
+          overflow-x: hidden;
+        }
+        
+        .problems-list {
+          max-height: calc(100vh - 200px);
+          overflow-y: auto;
+          overflow-x: hidden;
+          padding-right: 8px;
+        }
+        
+        /* Custom scrollbar for better UX */
+        .problems-list::-webkit-scrollbar {
+          width: 8px;
+        }
+        
+        .problems-list::-webkit-scrollbar-track {
+          background: var(--vscode-scrollbarSlider-background);
+          border-radius: 10px;
+        }
+        
+        .problems-list::-webkit-scrollbar-thumb {
+          background: var(--vscode-scrollbarSlider-hoverBackground);
+          border-radius: 10px;
+        }
+        
+        .problems-list::-webkit-scrollbar-thumb:hover {
+          background: var(--vscode-scrollbarSlider-activeBackground);
+        }
+        
+        /* Loading animation */
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
         
         .header {
           display: flex;
@@ -156,6 +203,7 @@ export class LiveFeedPanel {
       </style>
     </head>
     <body>
+      <div class="main-container">
       <div class="header">
         <h2>� Live Problem Feed</h2>
         <div class="nav-buttons">
@@ -180,7 +228,17 @@ export class LiveFeedPanel {
         </div>
       </div>
       
-      <div id="feed"></div>
+      <div class="problems-list">
+        <div id="feed"></div>
+        <div id="loading" style="display: none; text-align: center; padding: 20px; color: var(--vscode-descriptionForeground);">
+          <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid var(--vscode-descriptionForeground); border-radius: 50%; border-top: 2px solid var(--accent); animation: spin 1s linear infinite;"></div>
+          <p style="margin-top: 10px;">Loading more problems...</p>
+        </div>
+        <div id="scrollEnd" style="text-align: center; padding: 20px; color: var(--vscode-descriptionForeground); font-style: italic;">
+          <p>📡 End of feed - Use "Load Community Problems" to get more content!</p>
+        </div>
+      </div>
+      </div>
       <script>
         const vscode = acquireVsCodeApi();
         const feed = document.getElementById('feed');
