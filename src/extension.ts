@@ -20,7 +20,9 @@ let pendingInspectorAuth = false;
 let isInspectorMode = false; // Track if this instance is acting as inspector
 let reconnectAttempts = 0;
 let reconnectTimer: NodeJS.Timeout | undefined;
-const maxReconnectAttempts = 5;
+let heartbeatTimer: NodeJS.Timeout | undefined;
+const maxReconnectAttempts = 10; // Increased from 5
+const heartbeatInterval = 30000; // Send ping every 30 seconds
 const configUrl = vscode.workspace.getConfiguration('conaint').get('serverUrl');
 const SERVER_URL = (typeof configUrl === 'string' && configUrl) ? configUrl : "wss://conaint-extension.onrender.com";
 
@@ -57,6 +59,9 @@ function connectToServer() {
         sendWs({ type: "auth", role: "inspector", userId });
         pendingInspectorAuth = false;
       }
+
+      // Start heartbeat to keep connection alive
+      startHeartbeat();
     });
 
     ws.on("error", (err) => {
@@ -67,6 +72,7 @@ function connectToServer() {
 
     ws.on("close", (code, reason) => {
       wsConnected = false;
+      stopHeartbeat(); // Stop heartbeat when connection closes
       console.warn("[Manager] WebSocket connection closed:", code, reason.toString());
       
       // Update all panels about connection status
@@ -74,8 +80,9 @@ function connectToServer() {
         MainDashboard.current.updateConnectionStatus(false);
       }
       
-      // Don't show error message for normal closure or if we're intentionally disconnecting
+      // Reconnect for most close codes except normal closure
       if (code !== 1000 && code !== 1001) {
+        console.log(`[Manager] Connection closed with code ${code}, attempting reconnect...`);
         attemptReconnect();
       }
     });
@@ -143,7 +150,37 @@ function connectToServer() {
   }
 }
 
+function startHeartbeat() {
+  // Clear any existing heartbeat
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+  }
+  
+  heartbeatTimer = setInterval(() => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.ping(); // Send WebSocket ping
+        console.log("[Manager] Heartbeat ping sent");
+      } catch (e) {
+        console.warn("[Manager] Heartbeat ping failed:", e);
+        wsConnected = false;
+        attemptReconnect();
+      }
+    }
+  }, heartbeatInterval);
+}
+
+function stopHeartbeat() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = undefined;
+  }
+}
+
 function attemptReconnect() {
+  // Stop heartbeat during reconnection
+  stopHeartbeat();
+  
   if (reconnectAttempts >= maxReconnectAttempts) {
     vscode.window.showErrorMessage("[Manager] Failed to connect to server after multiple attempts. Please check your connection.");
     return;
@@ -451,9 +488,23 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.commands.registerCommand("manager._internal.handleSuggest", (s: Suggestion) => {
-      manager.addSuggestion(s);
+      Manager.getInstance().addSuggestion(s);
       if (LiveFeedPanel.current) LiveFeedPanel.current.postNewSuggestion(s);
       if (ws) sendWs({ type: "suggestion.create", suggestion: s });
+    }),
+
+    vscode.commands.registerCommand("manager._internal.checkConnection", () => {
+      // Check WebSocket connection and update dashboard
+      if (MainDashboard.current) {
+        const connected = ws && ws.readyState === WebSocket.OPEN;
+        if (!connected && wsConnected) {
+          // Connection lost, update state and attempt reconnect
+          wsConnected = false;
+          console.log("[Manager] Connection health check failed, attempting reconnect...");
+          connectToServer();
+        }
+        MainDashboard.current.updateConnectionStatus(!!(connected && wsConnected), sessionId);
+      }
     })
   );
 
@@ -607,11 +658,13 @@ export function deactivate() {
   // Clean up monitoring UI
   hideMonitoringNotification();
   
-  // Clear reconnect timer
+  // Clear timers
   if (reconnectTimer) {
     clearTimeout(reconnectTimer);
     reconnectTimer = undefined;
   }
+  
+  stopHeartbeat();
   
   // Close WebSocket connection gracefully
   if (ws) {

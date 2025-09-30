@@ -10,6 +10,9 @@ export class MainDashboard {
     this.panel.webview.html = this._html();
     this.panel.webview.onDidReceiveMessage(this.handleMessage.bind(this));
     this.panel.onDidDispose(() => { MainDashboard.current = undefined; });
+    
+    // Start connection health monitoring
+    this.startConnectionHealthCheck();
   }
 
   public static create() {
@@ -79,6 +82,14 @@ export class MainDashboard {
       connected, 
       sessionId 
     });
+  }
+
+  // Periodically check connection status
+  private startConnectionHealthCheck() {
+    setInterval(() => {
+      // Request connection status update from extension
+      vscode.commands.executeCommand('manager._internal.checkConnection');
+    }, 5000); // Check every 5 seconds
   }
 
   private _html() {
