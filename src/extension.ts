@@ -1,4 +1,3 @@
-// src/extension.ts
 import * as vscode from "vscode";
 import WebSocket from "ws";
 import * as crypto from "crypto";
@@ -11,22 +10,19 @@ import { LeaderboardPanel } from "./panels/LeaderboardPanel";
 import { MainDashboard } from "./panels/MainDashboard";
 import { TestInspectorPanel } from "./panels/TestInspectorPanel";
 import { AiAnalysisPanel } from "./panels/AiAnalysisPanel";
-
 let ws: WebSocket | undefined;
 let sessionId: string | undefined;
 const userId = "u_" + Math.random().toString(36).slice(2, 8);
 let wsConnected = false;
 let pendingInspectorAuth = false;
-let isInspectorMode = false; // Track if this instance is acting as inspector
+let isInspectorMode = false;
 let reconnectAttempts = 0;
 let reconnectTimer: NodeJS.Timeout | undefined;
 let heartbeatTimer: NodeJS.Timeout | undefined;
-const maxReconnectAttempts = 10; // Increased from 5
-const heartbeatInterval = 30000; // Send ping every 30 seconds
+const maxReconnectAttempts = 10;
+const heartbeatInterval = 30000;
 const configUrl = vscode.workspace.getConfiguration('conaint').get('serverUrl');
 const SERVER_URL = (typeof configUrl === 'string' && configUrl) ? configUrl : "wss://conaint-extension.onrender.com";
-
-// telemetry throttling
 let lastSendTs = 0;
 const MIN_SEND_INTERVAL_MS = 80;
 
@@ -36,31 +32,24 @@ function shortHash(s: string) {
 
 function connectToServer() {
   if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
-    return; // Already connected or connecting
+    return;
   }
-
   try {
     console.log("[Manager] Connecting to server:", SERVER_URL);
     ws = new WebSocket(SERVER_URL);
     
     ws.on("open", () => {
       wsConnected = true;
-      reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+      reconnectAttempts = 0;
       console.log("[Manager] Connected to server: " + SERVER_URL);
       vscode.window.showInformationMessage("[Manager] Connected to server: " + SERVER_URL);
-      
-      // Update all panels about connection status
       if (MainDashboard.current) {
         MainDashboard.current.updateConnectionStatus(true);
       }
-      
-      // Handle pending inspector auth
       if (pendingInspectorAuth) {
         sendWs({ type: "auth", role: "inspector", userId });
         pendingInspectorAuth = false;
       }
-
-      // Start heartbeat to keep connection alive
       startHeartbeat();
     });
 

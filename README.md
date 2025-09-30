@@ -7,69 +7,41 @@
 **CONAINT** is a comprehensive VS Code extension for academic integrity monitoring and real-time code analysis. Perfect for educators, institutions, and development teams who need to monitor coding activities and detect potential academic misconduct.
 
 ## Features
+As you can see from the discription that is what it does, if a user like open any desktop application when the inspection mode is one it will inform the inspector.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+Anyone that have the extension can submit a problem he/she encounter while and any one can see it in the Feed mode it is like a mini stackoverflow.
 
-For example if there is an image subfolder under your extension project workspace:
+There is also an AI integrated to my Conaint extention to help the inspector to translate the bunch of json.
 
-\!\[feature X\]\(images/feature-x.png\)
+I also add a timer to let the inspector and the student to now the amount time they are being inspect.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
 
-## Requirements
+### Core Functionality
+- **Problem Submission**: Share coding problems with descriptions, code snippets, and tags
+- **Live Feed**: View and respond to problems from all users in real-time
+- **Suggestion System**: Provide and receive coding suggestions
+- **Real-time Updates**: WebSocket-powered live collaboration
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### Inspector Mode
+- **Activity Monitoring**: Track user keystrokes, file operations, and cursor movements
+- **Session Management**: Create inspector sessions with unique session IDs
+- **User Tiles**: Visual dashboard showing each user's activity
+- **Code Preview**: Live preview of user's current code
+- **Suspicious Activity Detection**: Automatic flagging of unusual patterns
+- **Activity Timeline**: Chronological view of user actions
+- **Export Logs**: Download session logs for analysis
+- **User Flagging**: Manual flagging system with notes
 
-## Extension Settings
+### Additional Features
+- **Leaderboard**: Track contribution scores and rankings
+- **Multi-user Support**: Connect multiple users to the same session
+- **Configurable Server**: Support for local and remote WebSocket servers
+- **Display Names**: Customizable user identification
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+> Tip: Although i have not come accros any extension that solve this problem but most intresting part of my extention is the AI integrated to it, it has the abilty for it to translate the Json file that is expoorted from the inspector session to normal word so that anyone can understand it.
 
 ## Known Issues
+Everything i use in creating this app is free so i do not the amount of user it can accumulate at once.
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
 
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+Created By Xrime

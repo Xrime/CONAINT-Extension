@@ -1,6 +1,3 @@
-// src/protocol.ts
-// Central protocol types for extension <-> server communication and in-memory models
-
 export type UserRole = 'student' | 'helper' | 'inspector' | 'admin';
 
 export interface User {

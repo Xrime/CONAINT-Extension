@@ -1,21 +1,15 @@
-// storage.ts
 import * as vscode from 'vscode';
-
 let problems: string[] = [];
 let suggestions: string[] = [];
 let context: vscode.ExtensionContext | undefined;
-
 export function initStorage(extensionContext: vscode.ExtensionContext) {
   context = extensionContext;
-  
-  // Load persisted data
   problems = context.globalState.get('manager.problems', []);
   suggestions = context.globalState.get('manager.suggestions', []);
 }
 
 export function addProblem(message: string) {
   problems.push(message);
-  // Persist to storage
   if (context) {
     context.globalState.update('manager.problems', problems);
   }

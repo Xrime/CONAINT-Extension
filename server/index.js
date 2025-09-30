@@ -1,16 +1,12 @@
-// server/index.js
 const WebSocket = require('ws');
 const { v4: uuidv4 } = require('uuid');
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || 'localhost';
-
 const wss = new WebSocket.Server({ port: PORT }, () => {
   console.log(`CONAINT WebSocket server running on ws://${HOST}:${PORT}`);
   console.log('🚀 CONAINT is ready for online academic integrity monitoring!');
 });
-
-
-const sessions = {}; // sessionId -> { inspectorSocket, members:Set }
+const sessions = {};
 const problems = [];
 const suggestions = [];
 
@@ -85,7 +81,6 @@ wss.on('connection', (ws) => {
 
 
     if (data.type === 'problem.create') {
-      // Create and store problem (avoid duplication)
       const problemData = data.problem || data;
       const problem = {
         problemId: problemData.problemId || 'p_' + Date.now(),
@@ -99,8 +94,6 @@ wss.on('connection', (ws) => {
         visibility: problemData.visibility || 'public',
         timestamp: problemData.timestamp || Date.now()
       };
-      
-      // Check for duplicates
       const existingProblem = problems.find(p => p.problemId === problem.problemId);
       if (!existingProblem) {
         problems.push(problem);
@@ -110,7 +103,6 @@ wss.on('connection', (ws) => {
       return;
     }
     if (data.type === 'suggestion.create') {
-      // Create and store suggestion
       const suggestion = {
         suggestionId: 's_' + Date.now(),
         problemId: data.suggestion?.problemId || data.problemId,
@@ -121,7 +113,6 @@ wss.on('connection', (ws) => {
         timestamp: Date.now()
       };
       suggestions.push(suggestion);
-      // Attach to problem
       const prob = problems.find(p => p.problemId === suggestion.problemId);
       if (prob) prob.suggestions.push(suggestion);
       broadcast({ type: 'suggestion.created', suggestion });
@@ -138,8 +129,6 @@ wss.on('connection', (ws) => {
 
     if (data.type === 'request.globalProblems') {
       console.log('[Server] Global problems requested by user:', ws._meta.userId);
-      
-      // Get recent public problems (last 7 days by default)
       const days = data.days || 7;
       const cutoffTime = Date.now() - (days * 24 * 60 * 60 * 1000);
       
@@ -147,14 +136,10 @@ wss.on('connection', (ws) => {
         p.timestamp > cutoffTime && 
         p.visibility === 'public'
       );
-      
-      // Get suggestions for these problems
       const problemIds = recentProblems.map(p => p.problemId);
       const recentSuggestions = suggestions.filter(s => 
         problemIds.includes(s.problemId)
       );
-      
-      // Send response back to requesting user
       send(ws, {
         type: 'globalProblems.response',
         problems: recentProblems,
@@ -170,7 +155,6 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     const meta = ws._meta || {};
     if (meta.role === 'inspector' && meta.sessionId && sessions[meta.sessionId]) {
-      // Notify all members that inspection ended
       sessions[meta.sessionId].members.forEach(m => {
         try { 
           send(m, { type: 'inspector.ended', message: 'Inspector session has ended' });
