@@ -23,7 +23,11 @@ export class TestInspectorPanel {
       'test-inspector', 
       'TEST Inspector Dashboard', 
       vscode.ViewColumn.Two, 
-      { enableScripts: true }
+      { 
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        enableFindWidget: true
+      }
     );
     
     TestInspectorPanel.current = new TestInspectorPanel(panel);

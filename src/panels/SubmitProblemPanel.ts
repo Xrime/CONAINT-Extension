@@ -25,7 +25,11 @@ export class SubmitProblemPanel {
       SubmitProblemPanel.current.panel.reveal();
       return;
     }
-    const panel = vscode.window.createWebviewPanel('submitProblem', 'Submit Problem', vscode.ViewColumn.One, { enableScripts: true });
+    const panel = vscode.window.createWebviewPanel('submitProblem', 'Submit Problem', vscode.ViewColumn.One, { 
+      enableScripts: true,
+      retainContextWhenHidden: true,
+      enableFindWidget: true
+    });
     SubmitProblemPanel.current = new SubmitProblemPanel(panel);
   }
 

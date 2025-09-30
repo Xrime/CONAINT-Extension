@@ -3,7 +3,11 @@ import * as vscode from 'vscode';
 
 export class LeaderboardPanel {
   public static show(lines: string[]) {
-    const panel = vscode.window.createWebviewPanel('leaderboard', 'Leaderboard', vscode.ViewColumn.Three, { enableScripts: false });
+    const panel = vscode.window.createWebviewPanel('leaderboard', 'Leaderboard', vscode.ViewColumn.Three, { 
+      enableScripts: false,
+      retainContextWhenHidden: true,
+      enableFindWidget: true
+    });
     panel.webview.html = `<!doctype html>
     <html>
     <head>

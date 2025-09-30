@@ -19,7 +19,11 @@ export class LiveFeedPanel {
       'liveFeed',
       'Live Problem Feed',
       vscode.ViewColumn.One,
-      { enableScripts: true }
+      { 
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        enableFindWidget: true
+      }
     );
     LiveFeedPanel.current = new LiveFeedPanel(panel);
     setTimeout(() => panel.webview.postMessage({ command: 'init', problems: initialProblems }), 200);

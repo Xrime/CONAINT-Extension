@@ -21,7 +21,11 @@ export class MainDashboard {
       'mainDashboard', 
       'CONAINT Dashboard', 
       vscode.ViewColumn.One, 
-      { enableScripts: true }
+      { 
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        enableFindWidget: true
+      }
     );
     MainDashboard.current = new MainDashboard(panel);
   }

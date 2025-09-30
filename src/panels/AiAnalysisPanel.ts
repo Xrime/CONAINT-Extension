@@ -32,7 +32,11 @@ export class AiAnalysisPanel {
       'conaint-ai-analysis', 
       'CONAINT AI - Cheating Detection', 
       vscode.ViewColumn.Two, 
-      { enableScripts: true }
+      { 
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        enableFindWidget: true
+      }
     );
     
     AiAnalysisPanel.current = new AiAnalysisPanel(panel);

@@ -50,7 +50,11 @@ export class InspectorPanel {
         return InspectorPanel.demoInstance; 
       }
       console.log('[InspectorPanel] Creating new DEMO instance');
-      const panel = vscode.window.createWebviewPanel('inspector-demo', 'Inspector Dashboard (DEMO MODE)', vscode.ViewColumn.Two, { enableScripts: true });
+      const panel = vscode.window.createWebviewPanel('inspector-demo', 'Inspector Dashboard (DEMO MODE)', vscode.ViewColumn.Two, { 
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        enableFindWidget: true
+      });
       InspectorPanel.demoInstance = new InspectorPanel(panel, true);
       console.log('[InspectorPanel] Demo instance created successfully');
       return InspectorPanel.demoInstance;
@@ -61,7 +65,11 @@ export class InspectorPanel {
         return InspectorPanel.current; 
       }
       console.log('[InspectorPanel] Creating new REAL instance');
-      const panel = vscode.window.createWebviewPanel('inspector', 'Inspector Dashboard', vscode.ViewColumn.Two, { enableScripts: true });
+      const panel = vscode.window.createWebviewPanel('inspector', 'Inspector Dashboard', vscode.ViewColumn.Two, { 
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        enableFindWidget: true
+      });
       InspectorPanel.current = new InspectorPanel(panel, false);
       console.log('[InspectorPanel] Real instance created successfully');
       return InspectorPanel.current;
