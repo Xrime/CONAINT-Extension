@@ -1,4 +1,3 @@
-// Test Inspector Panel - Minimal Version for Debugging
 import * as vscode from 'vscode';
 
 export class TestInspectorPanel {

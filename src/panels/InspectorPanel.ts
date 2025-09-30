@@ -1,4 +1,3 @@
-// src/panels/InspectorPanel.ts - COMPLETELY REWRITTEN FOR RELIABILITY
 import * as vscode from 'vscode';
 
 interface UserTile {
@@ -77,10 +76,10 @@ export class InspectorPanel {
   }
 
   public receiveTelemetry(userId: string, type: string, payload: any, ts: number, displayName?: string) {
-    // Only accept real telemetry if this is not demo mode, and only demo telemetry if this is demo mode
+
     const isDemoData = userId && userId.startsWith('DEMO_');
     if (this.isDemoMode !== isDemoData) {
-      return; // Don't mix demo and real data
+      return; 
     }
     
     let tile = this.users.get(userId);
@@ -97,7 +96,7 @@ export class InspectorPanel {
     this.panel.webview.postMessage({ command: 'telemetry', userId, type, payload, ts, events: tile.events });
   }
 
-  // Static method to get the appropriate instance for telemetry
+
   public static getInstanceForTelemetry(isDemoData: boolean): InspectorPanel | undefined {
     if (isDemoData) {
       return InspectorPanel.demoInstance;
@@ -139,11 +138,9 @@ export class InspectorPanel {
           finalReport = `🧪 DEMO MODE REPORT - FAKE DATA ONLY\nThis report contains simulated data for demonstration purposes.\n\n${readableReport}`;
         }
         
-        // Save text report
         const readableUri = saveUri.with({ path: saveUri.path.replace(/\.(txt|json)$/, '.txt') });
         await vscode.workspace.fs.writeFile(readableUri, Buffer.from(finalReport, 'utf8'));
-        
-        // Save JSON data
+
         const jsonUri = saveUri.with({ path: saveUri.path.replace(/\.(txt|json)$/, '.json') });
         const jsonData = isDemoData ? { ...data, DEMO_MODE: true } : data;
         await vscode.workspace.fs.writeFile(jsonUri, Buffer.from(JSON.stringify(jsonData, null, 2), 'utf8'));

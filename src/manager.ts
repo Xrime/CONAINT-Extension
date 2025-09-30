@@ -27,7 +27,7 @@ export class Manager {
     if (!isDuplicate) {
       this.problems.push(problem);
       
-      // Persist to storage
+      
       if (this.context) {
         this.context.globalState.update('manager.problemsData', this.problems);
       }
@@ -39,7 +39,6 @@ export class Manager {
   }
 
   public addSuggestion(suggestion: Suggestion) {
-    // Check for duplicates based on suggestion ID or unique combination of fields
     const isDuplicate = this.suggestions.some(s => 
       s.suggestionId === suggestion.suggestionId || 
       (s.problemId === suggestion.problemId && s.authorId === suggestion.authorId && s.content === suggestion.content && Math.abs(s.timestamp - suggestion.timestamp) < 1000)
@@ -63,7 +62,7 @@ export class Manager {
     this.problems = [];
     this.suggestions = [];
     
-    // Clear from persistent storage
+
     if (this.context) {
       this.context.globalState.update('manager.problemsData', []);
       this.context.globalState.update('manager.suggestionsData', []);
@@ -85,9 +84,8 @@ export class Manager {
     return this.suggestions;
   }
 
-  // Load global problems from server for new users
   public async loadGlobalProblems(): Promise<void> {
-    // This will be called when user opens Live Feed for the first time
+  
     console.log("Requesting global problems from server...");
   }
 

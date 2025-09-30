@@ -1,4 +1,3 @@
-// src/panels/MainDashboard.ts
 import * as vscode from 'vscode';
 
 export class MainDashboard {
@@ -11,7 +10,7 @@ export class MainDashboard {
     this.panel.webview.onDidReceiveMessage(this.handleMessage.bind(this));
     this.panel.onDidDispose(() => { MainDashboard.current = undefined; });
     
-    // Start connection health monitoring
+
     this.startConnectionHealthCheck();
   }
 
@@ -74,7 +73,6 @@ export class MainDashboard {
       vscode.window.showErrorMessage('Please provide both Session ID and Display Name');
       return;
     }
-    // Execute the join command with the provided data
     vscode.commands.executeCommand('manager._internal.joinInspector', { sessionId, displayName });
     vscode.window.showInformationMessage(`Joined inspector session: ${sessionId} as ${displayName}`);
   }
@@ -87,12 +85,11 @@ export class MainDashboard {
     });
   }
 
-  // Periodically check connection status
   private startConnectionHealthCheck() {
     setInterval(() => {
-      // Request connection status update from extension
+
       vscode.commands.executeCommand('manager._internal.checkConnection');
-    }, 5000); // Check every 5 seconds
+    }, 5000); 
   }
 
   private _html() {

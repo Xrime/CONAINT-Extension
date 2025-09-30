@@ -1,4 +1,3 @@
-// src/panels/SubmitProblemPanel.ts
 import * as vscode from 'vscode';
 import { Problem } from '../protocol';
 

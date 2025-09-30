@@ -1,4 +1,3 @@
-// src/panels/LeaderboardPanel.ts
 import * as vscode from 'vscode';
 
 export class LeaderboardPanel {

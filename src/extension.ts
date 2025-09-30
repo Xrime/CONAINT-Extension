@@ -61,15 +61,15 @@ function connectToServer() {
 
     ws.on("close", (code, reason) => {
       wsConnected = false;
-      stopHeartbeat(); // Stop heartbeat when connection closes
+      stopHeartbeat(); 
       console.warn("[Manager] WebSocket connection closed:", code, reason.toString());
       
-      // Update all panels about connection status
+      
       if (MainDashboard.current) {
         MainDashboard.current.updateConnectionStatus(false);
       }
       
-      // Reconnect for most close codes except normal closure
+   
       if (code !== 1000 && code !== 1001) {
         console.log(`[Manager] Connection closed with code ${code}, attempting reconnect...`);
         attemptReconnect();
@@ -92,7 +92,7 @@ function connectToServer() {
           if (LiveFeedPanel.current) LiveFeedPanel.current.postNewSuggestion(s);
 
         } else if (data.type && data.type.startsWith("telemetry")) {
-          // Route telemetry to the appropriate instance based on data
+       
           const isDemoData = data.userId && data.userId.startsWith('DEMO_');
           const targetInstance = InspectorPanel.getInstanceForTelemetry(isDemoData);
           if (targetInstance) {
@@ -100,20 +100,20 @@ function connectToServer() {
           }
 
         } else if (data.type === "inspector.joined") {
-          // Show notification to student that they're being monitored
+          
           console.log("[Manager] Inspector joined message received");
           showMonitoringNotification();
 
         } else if (data.type === "joined") {
-          // Alternative message for when student joins session
+          
           console.log("[Manager] Student joined inspector session");
           showMonitoringNotification();
 
         } else if (data.type === "inspector.ended") {
-          // Hide monitoring notification
+      
           hideMonitoringNotification();
           sessionId = undefined;
-          isInspectorMode = false; // Reset inspector mode
+          isInspectorMode = false; 
 
         } else if (data.type === "inspector.sessionStarted") {
           sessionId = data.sessionId;
@@ -127,12 +127,12 @@ function connectToServer() {
           }
 
         } else if (data.type === "globalProblems.response") {
-          // Handle global problems response
+          
           console.log("[Manager] Received global problems:", data.problems?.length || 0, "problems");
           if (data.problems && data.suggestions) {
             Manager.getInstance().syncGlobalProblems(data.problems, data.suggestions);
             
-            // Update Live Feed with global problems
+           
             if (LiveFeedPanel.current) {
               data.problems.forEach((problem: Problem) => {
                 LiveFeedPanel.current!.postNewProblem(problem);
@@ -161,7 +161,7 @@ function connectToServer() {
 }
 
 function startHeartbeat() {
-  // Clear any existing heartbeat
+
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer);
   }
@@ -169,7 +169,7 @@ function startHeartbeat() {
   heartbeatTimer = setInterval(() => {
     if (ws && ws.readyState === WebSocket.OPEN) {
       try {
-        ws.ping(); // Send WebSocket ping
+        ws.ping(); 
         console.log("[Manager] Heartbeat ping sent");
       } catch (e) {
         console.warn("[Manager] Heartbeat ping failed:", e);
@@ -188,7 +188,7 @@ function stopHeartbeat() {
 }
 
 function attemptReconnect() {
-  // Stop heartbeat during reconnection
+
   stopHeartbeat();
   
   if (reconnectAttempts >= maxReconnectAttempts) {
@@ -230,7 +230,7 @@ let monitoringStatusBar: vscode.StatusBarItem | undefined;
 let sessionTimer: NodeJS.Timeout | undefined;
 
 function showMonitoringNotification() {
-  // Create status bar item for monitoring indicator
+
   if (!monitoringStatusBar) {
     monitoringStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);
     monitoringStatusBar.text = "🔍 Being Monitored";
@@ -239,13 +239,11 @@ function showMonitoringNotification() {
     monitoringStatusBar.show();
   }
 
-  // Show initial notification
   vscode.window.showWarningMessage(
     "🔍 Inspector Session Active: Your VS Code activity is being monitored. Session time will be displayed in the status bar.",
     "Understood"
   );
 
-  // Start session timer for student
   let sessionStart = Date.now();
   sessionTimer = setInterval(() => {
     const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
@@ -275,7 +273,7 @@ function hideMonitoringNotification() {
 }
 
 function showDemoMonitoringNotification() {
-  // Create status bar item for DEMO monitoring indicator
+
   if (!monitoringStatusBar) {
     monitoringStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);
     monitoringStatusBar.text = "🧪 DEMO Monitored";
@@ -284,13 +282,13 @@ function showDemoMonitoringNotification() {
     monitoringStatusBar.show();
   }
 
-  // Show initial demo notification
+
   vscode.window.showWarningMessage(
     "🧪 DEMO MODE: Simulating student monitoring experience. This is NOT a real session.",
     "Understood"
   );
 
-  // Start demo session timer
+
   let sessionStart = Date.now();
   sessionTimer = setInterval(() => {
     const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
@@ -307,21 +305,19 @@ function showDemoMonitoringNotification() {
 export function activate(context: vscode.ExtensionContext) {
   const manager = Manager.getInstance();
   
-  // Initialize persistence
+ 
   manager.initialize(context);
   
-  // Also initialize the old storage system if still used elsewhere
+
   const { initStorage } = require('./storage');
   initStorage(context);
-  
-  // Initialize panels with context for persistence
+
   AiAnalysisPanel.setContext(context);
-  
-  // Also initialize SubmitProblemPanel for form data persistence
+
   const { SubmitProblemPanel } = require('./panels/SubmitProblemPanel');
   SubmitProblemPanel.setContext(context);
 
-  // Connect to server with automatic reconnection
+
   connectToServer();
 
   // commands
