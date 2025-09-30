@@ -59,6 +59,9 @@ export class MainDashboard {
       case 'openAiAnalysis':
         vscode.commands.executeCommand('manager.openAiAnalysis');
         break;
+      case 'loadGlobalProblems':
+        vscode.commands.executeCommand('manager._internal.requestGlobalProblems');
+        break;
     }
   }
 
@@ -375,6 +378,13 @@ export class MainDashboard {
           <p>Advanced AI-powered analysis to detect academic integrity violations and suspicious patterns</p>
           <button class="btn">Open CONAINT AI</button>
         </div>
+
+        <div class="card" onclick="loadGlobalProblems()">
+          <div class="card-icon">🌍</div>
+          <h3>Load Community Problems</h3>
+          <p>View recent problems and solutions shared by the global CONAINT community</p>
+          <button class="btn secondary">Load Global Feed</button>
+        </div>
       </div>
       
       <div class="inspector-features">
@@ -480,6 +490,10 @@ export class MainDashboard {
         
         function openAiAnalysis() {
           vscode.postMessage({ command: 'openAiAnalysis' });
+        }
+        
+        function loadGlobalProblems() {
+          vscode.postMessage({ command: 'loadGlobalProblems' });
         }
         
         function testInspector() {

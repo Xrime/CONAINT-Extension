@@ -14,7 +14,10 @@ export class LiveFeedPanel {
   }
 
   public static create(initialProblems: Problem[] = []) {
-    if (LiveFeedPanel.current) { LiveFeedPanel.current.panel.reveal(); return; }
+    if (LiveFeedPanel.current) { 
+      LiveFeedPanel.current.panel.reveal(); 
+      return; 
+    }
     const panel = vscode.window.createWebviewPanel(
       'liveFeed',
       'Live Problem Feed',
@@ -26,7 +29,13 @@ export class LiveFeedPanel {
       }
     );
     LiveFeedPanel.current = new LiveFeedPanel(panel);
-    setTimeout(() => panel.webview.postMessage({ command: 'init', problems: initialProblems }), 200);
+    
+    // Request global problems from server when opening Live Feed
+    setTimeout(() => {
+      panel.webview.postMessage({ command: 'init', problems: initialProblems });
+      // Request global problems
+      vscode.commands.executeCommand('manager._internal.requestGlobalProblems');
+    }, 200);
   }
 
   public postNewProblem(problem: Problem) {

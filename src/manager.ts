@@ -28,20 +28,44 @@ export class Manager {
   }
 
   public addProblem(problem: Problem) {
-    this.problems.push(problem);
+    // Check for duplicates based on problem ID or unique combination of fields
+    const isDuplicate = this.problems.some(p => 
+      p.problemId === problem.problemId || 
+      (p.title === problem.title && p.description === problem.description && p.ownerId === problem.ownerId && Math.abs(p.timestamp - problem.timestamp) < 1000)
+    );
     
-    // Persist to storage
-    if (this.context) {
-      this.context.globalState.update('manager.problemsData', this.problems);
+    if (!isDuplicate) {
+      this.problems.push(problem);
+      
+      // Persist to storage
+      if (this.context) {
+        this.context.globalState.update('manager.problemsData', this.problems);
+      }
+      
+      console.log(`Added new problem: ${problem.title} (ID: ${problem.problemId})`);
+    } else {
+      console.log(`Duplicate problem ignored: ${problem.title} (ID: ${problem.problemId})`);
     }
   }
 
   public addSuggestion(suggestion: Suggestion) {
-    this.suggestions.push(suggestion);
+    // Check for duplicates based on suggestion ID or unique combination of fields
+    const isDuplicate = this.suggestions.some(s => 
+      s.suggestionId === suggestion.suggestionId || 
+      (s.problemId === suggestion.problemId && s.authorId === suggestion.authorId && s.content === suggestion.content && Math.abs(s.timestamp - suggestion.timestamp) < 1000)
+    );
     
-    // Persist to storage
-    if (this.context) {
-      this.context.globalState.update('manager.suggestionsData', this.suggestions);
+    if (!isDuplicate) {
+      this.suggestions.push(suggestion);
+      
+      // Persist to storage
+      if (this.context) {
+        this.context.globalState.update('manager.suggestionsData', this.suggestions);
+      }
+      
+      console.log(`Added new suggestion for problem ${suggestion.problemId} by ${suggestion.authorId}`);
+    } else {
+      console.log(`Duplicate suggestion ignored for problem ${suggestion.problemId}`);
     }
   }
 
@@ -69,5 +93,32 @@ export class Manager {
 
   public getSuggestions(): Suggestion[] {
     return this.suggestions;
+  }
+
+  // Load global problems from server for new users
+  public async loadGlobalProblems(): Promise<void> {
+    // This will be called when user opens Live Feed for the first time
+    console.log("Requesting global problems from server...");
+  }
+
+  // Add method to sync with global problems
+  public syncGlobalProblems(globalProblems: Problem[], globalSuggestions: Suggestion[]) {
+    // Merge global problems with local ones, avoiding duplicates
+    globalProblems.forEach(problem => this.addProblem(problem));
+    globalSuggestions.forEach(suggestion => this.addSuggestion(suggestion));
+    
+    console.log(`Synced with global data: ${globalProblems.length} problems, ${globalSuggestions.length} suggestions`);
+  }
+
+  // Get problems created in the last N days (for sharing)
+  public getRecentProblems(days: number = 7): Problem[] {
+    const cutoffTime = Date.now() - (days * 24 * 60 * 60 * 1000);
+    return this.problems.filter(p => p.timestamp > cutoffTime && p.visibility === 'public');
+  }
+
+  // Get public suggestions for sharing
+  public getPublicSuggestions(): Suggestion[] {
+    const publicProblemIds = this.getRecentProblems().map(p => p.problemId);
+    return this.suggestions.filter(s => publicProblemIds.includes(s.problemId));
   }
 }

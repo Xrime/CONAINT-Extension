@@ -1,6 +1,10 @@
-# managerx README
+# CONAINT - Advanced Code Analysis and Academic Integrity Monitoring
 
-This is the README for your extension "managerx". After writing up a brief description, we recommend including the following sections.
+![CONAINT Logo](https://img.shields.io/badge/CONAINT-Academic%20Integrity-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.0.0-green?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-yellow?style=for-the-badge)
+
+**CONAINT** is a comprehensive VS Code extension for academic integrity monitoring and real-time code analysis. Perfect for educators, institutions, and development teams who need to monitor coding activities and detect potential academic misconduct.
 
 ## Features
 

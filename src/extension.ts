@@ -136,6 +136,27 @@ function connectToServer() {
           if (MainDashboard.current) {
             MainDashboard.current.updateConnectionStatus(true, data.sessionId);
           }
+
+        } else if (data.type === "globalProblems.response") {
+          // Handle global problems response
+          console.log("[Manager] Received global problems:", data.problems?.length || 0, "problems");
+          if (data.problems && data.suggestions) {
+            Manager.getInstance().syncGlobalProblems(data.problems, data.suggestions);
+            
+            // Update Live Feed with global problems
+            if (LiveFeedPanel.current) {
+              data.problems.forEach((problem: Problem) => {
+                LiveFeedPanel.current!.postNewProblem(problem);
+              });
+              data.suggestions.forEach((suggestion: Suggestion) => {
+                LiveFeedPanel.current!.postNewSuggestion(suggestion);
+              });
+            }
+            
+            vscode.window.showInformationMessage(
+              `[CONAINT] Loaded ${data.problems.length} recent problems from the community!`
+            );
+          }
         }
       } catch (e) {
         console.error("[Manager] Failed to process WS message:", e);
@@ -504,6 +525,21 @@ export function activate(context: vscode.ExtensionContext) {
           connectToServer();
         }
         MainDashboard.current.updateConnectionStatus(!!(connected && wsConnected), sessionId);
+      }
+    }),
+
+    vscode.commands.registerCommand("manager._internal.requestGlobalProblems", () => {
+      // Request global problems from server for new users
+      console.log("[Manager] Requesting global problems from server...");
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        sendWs({ 
+          type: "request.globalProblems", 
+          userId,
+          requestRecent: true,
+          days: 7 // Get problems from last 7 days
+        });
+      } else {
+        console.log("[Manager] Cannot request global problems - not connected to server");
       }
     })
   );

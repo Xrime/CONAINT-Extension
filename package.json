@@ -3,9 +3,18 @@
   "displayName": "CONAINT",
   "description": "CONAINT - Advanced Code Analysis and Academic Integrity Monitoring System",
   "version": "1.0.0",
-  "publisher": "your-publisher-name",
+  "publisher": "Xrime",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Xrime/CONAINT-Extension.git"
+  },
+  "homepage": "https://github.com/Xrime/CONAINT-Extension",
+  "bugs": {
+    "url": "https://github.com/Xrime/CONAINT-Extension/issues"
+  },
   "categories": ["Other", "Education"],
-  "keywords": ["collaboration", "inspector", "problem-sharing", "real-time"],
+  "keywords": ["collaboration", "inspector", "problem-sharing", "real-time", "academic-integrity", "code-analysis", "monitoring", "ai-analysis"],
+  "license": "MIT",
   "engines": {
     "vscode": "^1.80.0"
   },

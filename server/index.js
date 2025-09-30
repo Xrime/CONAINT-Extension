@@ -135,6 +135,36 @@ wss.on('connection', (ws) => {
         try { send(m, { type: 'inspector.requestSnapshot' }); } catch (e) {}
       });
     }
+
+    if (data.type === 'request.globalProblems') {
+      console.log('[Server] Global problems requested by user:', ws._meta.userId);
+      
+      // Get recent public problems (last 7 days by default)
+      const days = data.days || 7;
+      const cutoffTime = Date.now() - (days * 24 * 60 * 60 * 1000);
+      
+      const recentProblems = problems.filter(p => 
+        p.timestamp > cutoffTime && 
+        p.visibility === 'public'
+      );
+      
+      // Get suggestions for these problems
+      const problemIds = recentProblems.map(p => p.problemId);
+      const recentSuggestions = suggestions.filter(s => 
+        problemIds.includes(s.problemId)
+      );
+      
+      // Send response back to requesting user
+      send(ws, {
+        type: 'globalProblems.response',
+        problems: recentProblems,
+        suggestions: recentSuggestions,
+        requestedDays: days,
+        timestamp: Date.now()
+      });
+      
+      console.log(`[Server] Sent ${recentProblems.length} problems and ${recentSuggestions.length} suggestions to ${ws._meta.userId}`);
+    }
   });
 
   ws.on('close', () => {
