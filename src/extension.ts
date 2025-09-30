@@ -18,8 +18,11 @@ const userId = "u_" + Math.random().toString(36).slice(2, 8);
 let wsConnected = false;
 let pendingInspectorAuth = false;
 let isInspectorMode = false; // Track if this instance is acting as inspector
-const configUrl = vscode.workspace.getConfiguration('manager').get('serverUrl');
-const SERVER_URL = (typeof configUrl === 'string' && configUrl) ? configUrl : "wss://your-app.up.railway.app";
+let reconnectAttempts = 0;
+let reconnectTimer: NodeJS.Timeout | undefined;
+const maxReconnectAttempts = 5;
+const configUrl = vscode.workspace.getConfiguration('conaint').get('serverUrl');
+const SERVER_URL = (typeof configUrl === 'string' && configUrl) ? configUrl : "wss://conaint-extension.onrender.com";
 
 // telemetry throttling
 let lastSendTs = 0;
@@ -29,13 +32,150 @@ function shortHash(s: string) {
   return crypto.createHash("sha256").update(s || "").digest("hex").slice(0, 10);
 }
 
+function connectToServer() {
+  if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+    return; // Already connected or connecting
+  }
+
+  try {
+    console.log("[Manager] Connecting to server:", SERVER_URL);
+    ws = new WebSocket(SERVER_URL);
+    
+    ws.on("open", () => {
+      wsConnected = true;
+      reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+      console.log("[Manager] Connected to server: " + SERVER_URL);
+      vscode.window.showInformationMessage("[Manager] Connected to server: " + SERVER_URL);
+      
+      // Update all panels about connection status
+      if (MainDashboard.current) {
+        MainDashboard.current.updateConnectionStatus(true);
+      }
+      
+      // Handle pending inspector auth
+      if (pendingInspectorAuth) {
+        sendWs({ type: "auth", role: "inspector", userId });
+        pendingInspectorAuth = false;
+      }
+    });
+
+    ws.on("error", (err) => {
+      console.error("[Manager] WebSocket error:", err);
+      wsConnected = false;
+      attemptReconnect();
+    });
+
+    ws.on("close", (code, reason) => {
+      wsConnected = false;
+      console.warn("[Manager] WebSocket connection closed:", code, reason.toString());
+      
+      // Update all panels about connection status
+      if (MainDashboard.current) {
+        MainDashboard.current.updateConnectionStatus(false);
+      }
+      
+      // Don't show error message for normal closure or if we're intentionally disconnecting
+      if (code !== 1000 && code !== 1001) {
+        attemptReconnect();
+      }
+    });
+
+    ws.on("message", (m: WebSocket.RawData) => {
+      try {
+        const data = JSON.parse(m.toString());
+        console.log("[Manager] WS message received:", data);
+
+        if (data.type === "problem.created") {
+          const p = data.problem as Problem;
+          Manager.getInstance().addProblem(p);
+          if (LiveFeedPanel.current) LiveFeedPanel.current.postNewProblem(p);
+
+        } else if (data.type === "suggestion.created") {
+          const s = data.suggestion as Suggestion;
+          Manager.getInstance().addSuggestion(s);
+          if (LiveFeedPanel.current) LiveFeedPanel.current.postNewSuggestion(s);
+
+        } else if (data.type && data.type.startsWith("telemetry")) {
+          // Route telemetry to the appropriate instance based on data
+          const isDemoData = data.userId && data.userId.startsWith('DEMO_');
+          const targetInstance = InspectorPanel.getInstanceForTelemetry(isDemoData);
+          if (targetInstance) {
+            targetInstance.receiveTelemetry(data.userId, data.type, data.payload, data.ts, data.displayName);
+          }
+
+        } else if (data.type === "inspector.joined") {
+          // Show notification to student that they're being monitored
+          console.log("[Manager] Inspector joined message received");
+          showMonitoringNotification();
+
+        } else if (data.type === "joined") {
+          // Alternative message for when student joins session
+          console.log("[Manager] Student joined inspector session");
+          showMonitoringNotification();
+
+        } else if (data.type === "inspector.ended") {
+          // Hide monitoring notification
+          hideMonitoringNotification();
+          sessionId = undefined;
+          isInspectorMode = false; // Reset inspector mode
+
+        } else if (data.type === "inspector.sessionStarted") {
+          sessionId = data.sessionId;
+          vscode.env.clipboard.writeText(data.sessionId);
+          vscode.window.showInformationMessage(
+            `[Manager] Inspector session created: ${data.sessionId} (copied to clipboard)`
+          );
+          console.log("[Manager] Inspector session created:", data.sessionId);
+          if (MainDashboard.current) {
+            MainDashboard.current.updateConnectionStatus(true, data.sessionId);
+          }
+        }
+      } catch (e) {
+        console.error("[Manager] Failed to process WS message:", e);
+        vscode.window.showErrorMessage("[Manager] Failed to process WS message: " + (e instanceof Error ? e.message : String(e)));
+      }
+    });
+
+  } catch (e) {
+    console.error("[Manager] WebSocket connection failed:", e);
+    wsConnected = false;
+    attemptReconnect();
+  }
+}
+
+function attemptReconnect() {
+  if (reconnectAttempts >= maxReconnectAttempts) {
+    vscode.window.showErrorMessage("[Manager] Failed to connect to server after multiple attempts. Please check your connection.");
+    return;
+  }
+
+  reconnectAttempts++;
+  const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000); // Exponential backoff, max 30s
+
+  console.log(`[Manager] Attempting to reconnect (${reconnectAttempts}/${maxReconnectAttempts}) in ${delay}ms...`);
+  
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+  }
+  
+  reconnectTimer = setTimeout(() => {
+    connectToServer();
+  }, delay);
+}
+
 function sendWs(obj: any) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    try {
-      ws.send(JSON.stringify(obj));
-    } catch (e) {
-      console.error("WebSocket send failed:", e);
-    }
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    console.warn("[Manager] WebSocket not connected, attempting to reconnect...");
+    connectToServer();
+    return;
+  }
+  
+  try {
+    ws.send(JSON.stringify(obj));
+  } catch (e) {
+    console.error("WebSocket send failed:", e);
+    wsConnected = false;
+    attemptReconnect();
   }
 }
 
@@ -134,96 +274,8 @@ export function activate(context: vscode.ExtensionContext) {
   const { SubmitProblemPanel } = require('./panels/SubmitProblemPanel');
   SubmitProblemPanel.setContext(context);
 
-  // connect to server (optional)
-  try {
-    ws = new WebSocket(SERVER_URL);
-    ws.on("open", () => {
-      wsConnected = true;
-      console.log("[Manager] Connected to server: " + SERVER_URL);
-      vscode.window.showInformationMessage("[Manager] Connected to server: " + SERVER_URL);
-      if (MainDashboard.current) {
-        MainDashboard.current.updateConnectionStatus(true);
-      }
-      if (pendingInspectorAuth) {
-        sendWs({ type: "auth", role: "inspector", userId });
-        pendingInspectorAuth = false;
-      }
-    });
-
-    ws.on("error", (err) => {
-      console.error("[Manager] WebSocket error:", err);
-      vscode.window.showErrorMessage("[Manager] WebSocket error: " + err.message);
-    });
-
-    ws.on("close", () => {
-      wsConnected = false;
-      console.warn("[Manager] WebSocket connection closed");
-      vscode.window.showWarningMessage("[Manager] WebSocket connection closed");
-      if (MainDashboard.current) {
-        MainDashboard.current.updateConnectionStatus(false);
-      }
-    });
-
-    ws.on("message", (m: WebSocket.RawData) => {
-      try {
-        const data = JSON.parse(m.toString());
-        console.log("[Manager] WS message received:", data);
-
-        if (data.type === "problem.created") {
-          const p = data.problem as Problem;
-          manager.addProblem(p);
-          if (LiveFeedPanel.current) LiveFeedPanel.current.postNewProblem(p);
-
-        } else if (data.type === "suggestion.created") {
-          const s = data.suggestion as Suggestion;
-          manager.addSuggestion(s);
-          if (LiveFeedPanel.current) LiveFeedPanel.current.postNewSuggestion(s);
-
-        } else if (data.type && data.type.startsWith("telemetry")) {
-          // Route telemetry to the appropriate instance based on data
-          const isDemoData = data.userId && data.userId.startsWith('DEMO_');
-          const targetInstance = InspectorPanel.getInstanceForTelemetry(isDemoData);
-          if (targetInstance) {
-            targetInstance.receiveTelemetry(data.userId, data.type, data.payload, data.ts, data.displayName);
-          }
-
-        } else if (data.type === "inspector.joined") {
-          // Show notification to student that they're being monitored
-          console.log("[Manager] Inspector joined message received");
-          showMonitoringNotification();
-
-        } else if (data.type === "joined") {
-          // Alternative message for when student joins session
-          console.log("[Manager] Student joined inspector session");
-          showMonitoringNotification();
-
-        } else if (data.type === "inspector.ended") {
-          // Hide monitoring notification
-          hideMonitoringNotification();
-          sessionId = undefined;
-          isInspectorMode = false; // Reset inspector mode
-
-        } else if (data.type === "inspector.sessionStarted") {
-          sessionId = data.sessionId;
-          vscode.env.clipboard.writeText(data.sessionId);
-          vscode.window.showInformationMessage(
-            `[Manager] Inspector session created: ${data.sessionId} (copied to clipboard)`
-          );
-          console.log("[Manager] Inspector session created:", data.sessionId);
-          if (MainDashboard.current) {
-            MainDashboard.current.updateConnectionStatus(true, data.sessionId);
-          }
-        }
-      } catch (e) {
-        console.error("[Manager] Failed to process WS message:", e);
-  vscode.window.showErrorMessage("[Manager] Failed to process WS message: " + (e instanceof Error ? e.message : String(e)));
-      }
-    });
-  } catch (e) {
-    ws = undefined;
-    console.error("[Manager] WebSocket connection failed:", e);
-  vscode.window.showErrorMessage("[Manager] WebSocket connection failed: " + (e instanceof Error ? e.message : String(e)));
-  }
+  // Connect to server with automatic reconnection
+  connectToServer();
 
   // commands
   context.subscriptions.push(
@@ -243,10 +295,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand("manager.startInspector", () => {
       if (!wsConnected) {
-        vscode.window.showWarningMessage(
-          "WebSocket server not connected. Run server/index.js for multi-host inspector."
+        vscode.window.showInformationMessage(
+          "Connecting to CONAINT server..."
         );
         pendingInspectorAuth = true;
+        connectToServer(); // Attempt to connect
       } else {
         sendWs({ type: "auth", role: "inspector", userId });
       }
@@ -554,12 +607,22 @@ export function deactivate() {
   // Clean up monitoring UI
   hideMonitoringNotification();
   
-  // Close WebSocket connection
+  // Clear reconnect timer
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = undefined;
+  }
+  
+  // Close WebSocket connection gracefully
   if (ws) {
     try {
-      ws.close();
+      ws.close(1000, "Extension deactivated"); // Normal closure
+      ws = undefined;
     } catch (e) {
       console.error("WebSocket close failed:", e);
     }
   }
+  
+  wsConnected = false;
+  reconnectAttempts = 0;
 }

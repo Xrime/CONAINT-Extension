@@ -29,7 +29,7 @@
       "properties": {
         "conaint.serverUrl": {
           "type": "string",
-          "default": "ws://localhost:3000",
+          "default": "wss://conaint-extension.onrender.com",
           "description": "WebSocket server URL for remote connections"
         },
         "conaint.huggingfaceApiToken": {
