@@ -44,15 +44,17 @@ export class AiAnalysisPanel {
     }
     
     if (message.command === 'checkApiKey') {
-      // API key is built-in, always available
+      // Check if API token is configured
+      const config = vscode.workspace.getConfiguration('conaint');
+      const apiToken = config.get<string>('huggingfaceApiToken');
       this.panel.webview.postMessage({
         command: 'apiKeyStatus',
-        hasKey: true
+        hasKey: !!apiToken
       });
     }
     
     if (message.command === 'openSettings') {
-      vscode.commands.executeCommand('workbench.action.openSettings', '@ext:your-publisher-name.manager geminiApiKey');
+      vscode.commands.executeCommand('workbench.action.openSettings', 'conaint.huggingfaceApiToken');
     }
 
     if (message.command === 'saveSessionData') {
