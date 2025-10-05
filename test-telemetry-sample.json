@@ -1,0 +1,89 @@
+{
+  "sessionId": "test_session_001",
+  "timestamp": "2025-10-02T15:30:00.000Z",
+  "exportedAt": 1696257000000,
+  "duration": 45,
+  "data": [
+    {
+      "userId": "student_001",
+      "type": "keystroke_activity",
+      "timestamp": 1696257001000,
+      "data": {
+        "fileName": "main.py",
+        "textLength": 15,
+        "hasCodePatterns": true,
+        "suspiciousActivity": false
+      }
+    },
+    {
+      "userId": "student_001", 
+      "type": "paste_detected",
+      "timestamp": 1696257005000,
+      "data": {
+        "fileName": "main.py",
+        "textLength": 120,
+        "hasCodePatterns": true,
+        "suspiciousActivity": true
+      }
+    },
+    {
+      "userId": "student_001",
+      "type": "window_focus", 
+      "timestamp": 1696257010000,
+      "data": {
+        "focused": false,
+        "timeAway": 30
+      }
+    },
+    {
+      "userId": "student_001",
+      "type": "window_focus",
+      "timestamp": 1696257040000, 
+      "data": {
+        "focused": true,
+        "timeAway": 0
+      }
+    },
+    {
+      "userId": "student_002",
+      "type": "keystroke_activity",
+      "timestamp": 1696257002000,
+      "data": {
+        "fileName": "solution.js", 
+        "textLength": 25,
+        "hasCodePatterns": true,
+        "suspiciousActivity": false
+      }
+    },
+    {
+      "userId": "student_002",
+      "type": "paste_detected",
+      "timestamp": 1696257008000,
+      "data": {
+        "fileName": "solution.js",
+        "textLength": 200,
+        "hasCodePatterns": true,
+        "suspiciousActivity": true
+      }
+    },
+    {
+      "userId": "student_002",
+      "type": "paste_detected", 
+      "timestamp": 1696257012000,
+      "data": {
+        "fileName": "solution.js",
+        "textLength": 180,
+        "hasCodePatterns": true,
+        "suspiciousActivity": true
+      }
+    },
+    {
+      "userId": "student_002",
+      "type": "editor_change",
+      "timestamp": 1696257015000,
+      "data": {
+        "fileName": "helper.js"
+      }
+    }
+  ]
+}
