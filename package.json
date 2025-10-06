@@ -1,21 +1,163 @@
 {
-  "name": "conaint-server",
-  "version": "1.0.0",
-  "description": "WebSocket server for CONAINT extension",
-  "main": "index.js",
+  "name": "conaint",
+  "displayName": "CONAINT",
+  "description": "CONAINT - Advanced Code Analysis and Academic Integrity Monitoring System",
+  "version": "1.2.1",
+  "publisher": "xrime",
+  "categories": [
+    "Other",
+    "Education"
+  ],
+  "keywords": [
+    "collaboration",
+    "inspector",
+    "problem-sharing",
+    "real-time",
+    "academic-integrity",
+    "code-analysis",
+    "monitoring",
+    "ai-analysis"
+  ],
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xrime/conaint.git"
+  },
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "manager.openDashboard",
+        "title": "Open Dashboard",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.submitProblem",
+        "title": "Submit Problem",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.openLiveFeed",
+        "title": "Open Live Feed",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.startInspector",
+        "title": "Start Inspector Mode",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.testInspector",
+        "title": "Test Inspector",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.testStudentView",
+        "title": "Test Student View",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.joinInspector",
+        "title": "Join Inspector Session",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.openLeaderboard",
+        "title": "Open Leaderboard",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.openAiAnalysis",
+        "title": "Open AI Analysis",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.testAIAnalysis",
+        "title": "Test AI Analysis System",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.generateAnalytics",
+        "title": "Generate Session Analytics",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.startServer",
+        "title": "Start Local CONAINT Server",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.exportSessionData",
+        "title": "Export Session Data",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.checkUserIdStatus",
+        "title": "Check User ID Status (Debug)",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.clearSession",
+        "title": "Clear Session State (Debug)",
+        "category": "conaint"
+      },
+      {
+        "command": "manager.quickStartInspector",
+        "title": "Quick Start Inspector Mode",
+        "category": "conaint"
+      }
+    ],
+    "configuration": {
+      "title": "CONAINT",
+      "properties": {
+        "conaint.serverUrl": {
+          "type": "string",
+          "default": "wss://conaint-extension.onrender.com",
+          "description": "WebSocket server URL for CONAINT connection"
+        },
+        "conaint.huggingFaceToken": {
+          "type": "string",
+          "default": "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",
+          "description": "Hugging Face API token for AI analysis"
+        },
+        "conaint.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically connect to server on startup"
+        },
+        "conaint.enableTelemetry": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable telemetry data collection"
+        }
+      }
+    }
+  },
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
   },
   "dependencies": {
-    "ws": "^8.14.2",
-    "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "@types/uuid": "^9.0.8",
+    "@types/ws": "^8.18.1",
+    "uuid": "^9.0.1",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "engines": {
-    "node": ">=14.0.0"
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.34.0",
+    "typescript": "^5.9.2"
   }
 }
