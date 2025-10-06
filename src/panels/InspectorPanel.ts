@@ -523,6 +523,168 @@ export class InspectorPanel {
         });
     }
 
+    public receiveTelemetry(
+        userId: string,
+        eventType: string,
+        payload: any,
+        timestamp?: number,
+        displayName?: string
+    ): void {
+        const normalizedType = this.normalizeTelemetryType(eventType);
+        const userLabel = displayName || userId || 'Unknown';
+
+        const { action, details, activityClass } = this.describeTelemetryEvent(normalizedType, payload);
+
+        this._panel.webview.postMessage({
+            command: 'userActivity',
+            user: userLabel,
+            action,
+            details,
+            type: activityClass,
+            timestamp: timestamp ?? Date.now()
+        });
+    }
+
+    private normalizeTelemetryType(eventType: string | undefined): string {
+        if (!eventType) {
+            return 'unknown';
+        }
+
+        const cleaned = eventType.toLowerCase();
+        if (cleaned.startsWith('telemetry.')) {
+            return cleaned.substring('telemetry.'.length);
+        }
+
+        const lastSegment = cleaned.split('.').pop();
+        return lastSegment ?? cleaned;
+    }
+
+    private describeTelemetryEvent(eventType: string, payload: any): {
+        action: string;
+        details: string;
+        activityClass: string;
+    } {
+        let action = 'Activity detected';
+        let details = '';
+        let activityClass = 'key-press';
+
+        switch (eventType) {
+            case 'window_focus':
+            case 'focus':
+            case 'focus_change': {
+                const focused = payload?.focused ?? payload?.hasFocus ?? payload?.focus;
+                if (focused === false) {
+                    action = '⚠️ VS Code lost focus';
+                    details = 'User switched to another application';
+                    activityClass = 'focus-violation';
+                } else {
+                    action = '✅ VS Code focused';
+                    const away = payload?.timeAway ?? payload?.timeAwaySeconds ?? 0;
+                    details = away ? `Returned after ${away} seconds away` : 'Window activated';
+                    activityClass = 'focus-restoration';
+                }
+                break;
+            }
+            case 'focus_violation': {
+                const away = payload?.timeAway ?? payload?.timeAwaySeconds ?? payload?.duration;
+                action = '⚠️ Switched to another app';
+                details = away ? `Away for ${away} seconds` : 'Potential integrity concern';
+                activityClass = 'focus-violation';
+                break;
+            }
+            case 'focus_restoration': {
+                const away = payload?.timeAway ?? payload?.timeAwaySeconds ?? payload?.duration;
+                action = '✅ Returned to VS Code';
+                details = away ? `Back after ${away} seconds away` : 'Focus restored';
+                activityClass = 'focus-restoration';
+                break;
+            }
+            case 'paste_detected': {
+                const fileName = payload?.fileName || payload?.document || 'file';
+                const length = payload?.textLength ?? payload?.pasteSize;
+                const suspicious = payload?.suspiciousActivity || payload?.suspicious;
+                action = '📋 Pasted content';
+                details = `${length ? `${length} characters ` : ''}in ${fileName}`.trim();
+                if (suspicious) {
+                    details += details ? ' - suspicious large paste' : 'Suspicious paste';
+                    activityClass = 'suspicious-paste';
+                } else {
+                    activityClass = 'paste-activity';
+                }
+                break;
+            }
+            case 'keystroke_activity': {
+                const fileName = payload?.fileName || payload?.document || 'file';
+                const length = payload?.textLength ?? payload?.changes?.[0]?.textLength;
+                action = '⌨️ Typing';
+                details = `${length ? `${length} chars ` : ''}in ${fileName}`.trim();
+                activityClass = 'key-press';
+                break;
+            }
+            case 'editor_change': {
+                const fileName = payload?.fileName || payload?.document || 'file';
+                action = 'Typing in editor';
+                details = `File: ${fileName}`;
+                activityClass = 'key-press';
+                break;
+            }
+            case 'file_save': {
+                const fileName = payload?.fileName || payload?.document || 'file';
+                action = 'Saved file';
+                details = `File: ${fileName}`;
+                activityClass = 'file-change';
+                break;
+            }
+            case 'command': {
+                const commandId = payload?.command ?? payload?.commandId;
+                action = 'Executed command';
+                details = commandId ? `Command: ${commandId}` : 'Command executed';
+                activityClass = 'key-press';
+                break;
+            }
+            case 'selection': {
+                const length = payload?.length ?? payload?.selections?.[0]?.text?.length;
+                action = 'Text selected';
+                details = length ? `${length} characters highlighted` : 'Selection changed';
+                activityClass = 'mouse-click';
+                break;
+            }
+            case 'cursor_movement':
+            case 'cursor_move': {
+                const line = payload?.line ?? payload?.position?.line;
+                const character = payload?.character ?? payload?.position?.character;
+                action = 'Cursor moved';
+                details = (line !== undefined && character !== undefined)
+                    ? `Line ${line}, Column ${character}`
+                    : '';
+                activityClass = 'mouse-click';
+                break;
+            }
+            case 'session_started':
+            case 'session_start': {
+                const sessionType = payload?.sessionType || 'monitoring';
+                action = '🚀 Monitoring started';
+                details = `${sessionType} session initiated`;
+                activityClass = 'focus-restoration';
+                break;
+            }
+            default: {
+                action = eventType.replace(/[_.-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                if (payload) {
+                    try {
+                        const serialized = JSON.stringify(payload);
+                        details = serialized.length > 120 ? serialized.slice(0, 117) + '…' : serialized;
+                    } catch (error) {
+                        details = String(payload);
+                    }
+                }
+                activityClass = 'key-press';
+            }
+        }
+
+        return { action, details, activityClass };
+    }
+
     public dispose() {
         InspectorPanel.currentPanel = undefined;
         this.stopAutoUpdate();
