@@ -91,7 +91,7 @@ CONAINT is completely free to use with all features included. Built using free s
 
 ## 📝 Release Notes
 
-### 1.0.1
+### 1.2.2
 - Enhanced AI analysis with improved cheating detection algorithms
 - Fixed user identification system for inspector mode
 - Improved server connection stability
